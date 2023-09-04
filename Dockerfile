@@ -1,23 +1,26 @@
 FROM ghcr.io/blinklabs-io/haskell:8.10.7-3.8.1.0-1 as cardano-node-build
 # Install cardano-node
-ARG NODE_VERSION=8.1.2
+ARG CLI_VERSION=8.5.0.0
+ARG NODE_TAG=8.2.1-pre
+ARG NODE_VERSION=8.2.1
+ENV CLI_VERSION=${CLI_VERSION}
 ENV NODE_VERSION=${NODE_VERSION}
-RUN echo "Building tags/${NODE_VERSION}..." \
-    && echo tags/${NODE_VERSION} > /CARDANO_BRANCH \
+RUN echo "Building tags/${NODE_TAG}..." \
+    && echo tags/${NODE_TAG} > /CARDANO_BRANCH \
     && git clone https://github.com/input-output-hk/cardano-node.git \
     && cd cardano-node \
     && git fetch --all --recurse-submodules --tags \
     && git tag \
-    && git checkout tags/${NODE_VERSION} \
+    && git checkout tags/${NODE_TAG} \
     && echo "with-compiler: ghc-${GHC_VERSION}" >> cabal.project.local \
     && echo "package cardano-crypto-praos" >> cabal.project.local \
     && echo "  flags: -external-libsodium-vrf" >> cabal.project.local \
     && echo "tests: False" >> cabal.project.local \
     && cabal update \
-    && cabal build all \
+    && cabal build all cardano-cli \
     && mkdir -p /root/.local/bin/ \
     && cp -p dist-newstyle/build/$(uname -m)-linux/ghc-${GHC_VERSION}/cardano-node-${NODE_VERSION}/x/cardano-node/build/cardano-node/cardano-node /root/.local/bin/ \
-    && cp -p dist-newstyle/build/$(uname -m)-linux/ghc-${GHC_VERSION}/cardano-cli-${NODE_VERSION}/x/cardano-cli/build/cardano-cli/cardano-cli /root/.local/bin/ \
+    && cp -p dist-newstyle/build/$(uname -m)-linux/ghc-${GHC_VERSION}/cardano-cli-${CLI_VERSION}/x/cardano-cli/build/cardano-cli/cardano-cli /root/.local/bin/ \
     && rm -rf /root/.cabal/packages \
     && rm -rf /usr/local/lib/ghc-${GHC_VERSION}/ /usr/local/share/doc/ghc-${GHC_VERSION}/ \
     && rm -rf /code/cardano-node/dist-newstyle/ \
