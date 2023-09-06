@@ -1,8 +1,21 @@
+FROM rust:1-buster AS blst-builder
+
+WORKDIR /maestro/build
+RUN git clone https://github.com/supranational/blst . \
+    && git checkout v0.3.11 \
+    && ./build.sh
+
 FROM ghcr.io/blinklabs-io/haskell:8.10.7-3.8.1.0-1 as cardano-node-build
+
+# Install libblst
+COPY rootfs/ /
+COPY --from=blst-builder --chmod=0644 /maestro/build/bindings/blst_aux.h /maestro/build/bindings/blst.h /maestro/build/bindings/blst.hpp /usr/local/include/
+COPY --from=blst-builder --chmod=0644 /maestro/build/libblst.a /usr/local/lib/
+
 # Install cardano-node
-ARG CLI_VERSION=8.5.0.0
-ARG NODE_TAG=8.2.1-pre
-ARG NODE_VERSION=8.2.1
+ARG CLI_VERSION=8.6.1.0
+ARG NODE_TAG=8.3.0-pre
+ARG NODE_VERSION=8.3.0
 ENV CLI_VERSION=${CLI_VERSION}
 ENV NODE_VERSION=${NODE_VERSION}
 RUN echo "Building tags/${NODE_TAG}..." \
